@@ -16,7 +16,7 @@
  */
 package org.jboss.tree;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -27,7 +27,7 @@ import org.jboss.weld.tree.TreeRoot;
 @TreeRoot
 public class Root {
 
-    static final AtomicBoolean DESTROYED = new AtomicBoolean(false);
+    static final AtomicInteger DESTROYED = new AtomicInteger(0);
 
     // This should be the same instance as the one injected into Bloom#reused
     @Inject
@@ -43,7 +43,7 @@ public class Root {
 
     @PreDestroy
     public void destroy() {
-        DESTROYED.set(true);
+        DESTROYED.incrementAndGet();
         System.out.println("Destroy " + toString());
     }
 

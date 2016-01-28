@@ -38,6 +38,8 @@ public class TreeRootInterceptor {
 
     private final TreeContext treeContext;
 
+    private volatile ContextualInstanceStore detachedStore;
+
     @Inject
     public TreeRootInterceptor(TreeContextExtension extension) {
         this.treeContext = extension.getTreeContext();
@@ -51,13 +53,13 @@ public class TreeRootInterceptor {
 
     @PostConstruct
     void postConstruct(InvocationContext ctx) throws Exception {
-        treeContext.deactivate();
+        this.detachedStore = treeContext.deactivate();
         ctx.proceed();
     }
 
     @PreDestroy
     void preDestroy(InvocationContext ctx) throws Exception {
-        treeContext.destroy();
+        detachedStore.destroy();
         ctx.proceed();
     }
 

@@ -17,7 +17,7 @@
 package org.jboss.tree;
 
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.PostConstruct;
@@ -29,7 +29,7 @@ import org.jboss.weld.tree.TreeDependent;
 @TreeDependent
 public class Reused {
 
-    static final AtomicBoolean DESTROYED = new AtomicBoolean(false);
+    static final AtomicInteger DESTROYED = new AtomicInteger(0);
 
     private final AtomicLong id = new AtomicLong();
 
@@ -41,7 +41,7 @@ public class Reused {
 
     @PreDestroy
     public void destroy() {
-        DESTROYED.set(true);
+        DESTROYED.incrementAndGet();
         System.out.println("Destroy " + toString());
     }
 

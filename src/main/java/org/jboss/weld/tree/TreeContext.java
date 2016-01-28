@@ -73,24 +73,16 @@ public class TreeContext implements Context {
         contextualInstanceStore.set(new ContextualInstanceStore());
     }
 
-    void deactivate() {
+    ContextualInstanceStore deactivate() {
         ContextualInstanceStore store = contextualInstanceStore.get();
-        if (store == null) {
-            return;
+        if (store != null) {
+            try {
+                store.deactivate();
+            } finally {
+                contextualInstanceStore.remove();
+            }
         }
-        store.deactivate();
-    }
-
-    void destroy() {
-        ContextualInstanceStore store = contextualInstanceStore.get();
-        if (store == null) {
-            return;
-        }
-        try {
-            store.destroy();
-        } finally {
-            contextualInstanceStore.remove();
-        }
+        return store;
     }
 
 }

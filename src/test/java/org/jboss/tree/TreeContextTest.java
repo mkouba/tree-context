@@ -17,9 +17,7 @@
 package org.jboss.tree;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
@@ -37,17 +35,26 @@ public class TreeContextTest {
     public void testTreeContext() {
         try (WeldContainer container = new Weld().disableDiscovery().addExtension(new TreeContextExtension()).packages(TreeContext.class)
                 .beanClasses(Root.class, Reused.class, Bloom.class).initialize()) {
-            Root root = container.select(Root.class).get();
-            assertNotNull(root);
-            assertNotNull(root.getBloom());
-            assertNotNull(root.getReused());
-            assertEquals(root.getReused().getId(), root.getBloom().getReused().getId());
-            assertFalse(Root.DESTROYED.get());
-            assertFalse(Reused.DESTROYED.get());
-            container.destroy(root);
-            assertTrue(Root.DESTROYED.get());
-            assertTrue(Reused.DESTROYED.get());
+            Root root1 = container.select(Root.class).get();
+            Root root2 = container.select(Root.class).get();
+            assertRoot(root1);
+            assertRoot(root2);
+            assertEquals(0, Root.DESTROYED.get());
+            assertEquals(0, Reused.DESTROYED.get());
+            container.destroy(root1);
+            assertEquals(1, Root.DESTROYED.get());
+            assertEquals(1, Reused.DESTROYED.get());
+            container.destroy(root2);
+            assertEquals(2, Root.DESTROYED.get());
+            assertEquals(2, Reused.DESTROYED.get());
         }
+    }
+
+    private void assertRoot(Root root) {
+        assertNotNull(root);
+        assertNotNull(root.getBloom());
+        assertNotNull(root.getReused());
+        assertEquals(root.getReused().getId(), root.getBloom().getReused().getId());
     }
 
 }
