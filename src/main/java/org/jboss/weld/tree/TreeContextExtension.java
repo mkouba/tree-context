@@ -16,10 +16,18 @@
  */
 package org.jboss.weld.tree;
 
+import java.lang.annotation.Annotation;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AfterBeanDiscovery;
+import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.inject.spi.InjectionPoint;
+import javax.enterprise.inject.spi.ProcessBean;
 
 /**
  *
@@ -30,9 +38,32 @@ public class TreeContextExtension implements Extension {
 
     private TreeContext treeContext;
 
-    public void registerTreeContext(@Observes AfterBeanDiscovery event, BeanManager manager) {
+    private List<Bean<?>> beansToValidate;
+
+    public TreeContextExtension() {
+        this.beansToValidate = new LinkedList<>();
+    }
+
+    void processBean(@Observes ProcessBean<?> event) {
+        Bean<?> bean = event.getBean();
+        if (!Dependent.class.equals(bean.getScope()) && !TreeDependent.class.equals(bean.getScope()) && bean.getInjectionPoints() != null
+                && !bean.getInjectionPoints().isEmpty()) {
+            beansToValidate.add(bean);
+        }
+    }
+
+    void registerTreeContext(@Observes AfterBeanDiscovery event, BeanManager manager) {
         this.treeContext = new TreeContext();
         event.addContext(treeContext);
+        // Validate beans
+        for (Bean<?> bean : beansToValidate) {
+            for (InjectionPoint injectionPoint : bean.getInjectionPoints()) {
+                Bean<?> injectedBean = manager.resolve(manager.getBeans(injectionPoint.getType(), injectionPoint.getQualifiers().toArray(new Annotation[] {})));
+                if (TreeDependent.class.equals(injectedBean.getScope())) {
+                    event.addDefinitionError(new IllegalStateException("@TreeDependent bean can only be injected into @Dependent or @TreeDependent bean"));
+                }
+            }
+        }
     }
 
     TreeContext getTreeContext() {
